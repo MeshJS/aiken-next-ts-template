@@ -1,6 +1,6 @@
 # Aiken Hello World Next.js TypeScript
 
-Get started to write smart contracts on Cardano with Aiken and execute it with Mesh. [[Read more](https://aiken-lang.org/getting-started/hello-world)]
+Get started to write smart contracts on Cardano with Aiken and execute it with Mesh. [[Read more](https://aiken-lang.org/example--hello-world)]
 
 ## Getting Started
 

@@ -3,11 +3,10 @@ import Head from "next/head";
 import {
   resolvePlutusScriptAddress,
   Transaction,
-  resolvePaymentKeyHash,
   KoiosProvider,
   resolveDataHash,
 } from "@meshsdk/core";
-import type { PlutusScript } from "@meshsdk/core";
+import type { PlutusScript, Data } from "@meshsdk/core";
 import { CardanoWallet, MeshBadge, useWallet } from "@meshsdk/react";
 
 import plutusScript from "@data/plutus.json";
@@ -23,15 +22,25 @@ enum States {
   unlocked,
 }
 
+const script: PlutusScript = {
+  code: plutusScript.validators[0].compiledCode,
+  version: "V2",
+};
+const scriptAddress = resolvePlutusScriptAddress(script, 0);
+const redeemerData = "Hello, World!";
+const lovelaceAmount = "5000000";
+
+const datum: Data = {
+  alternative: 0,
+  fields: [redeemerData],
+};
+
+const koios = new KoiosProvider("preprod");
+
 export default function Home() {
   const [state, setState] = useState(States.init);
 
   const { connected } = useWallet();
-
-  const script: PlutusScript = {
-    code: plutusScript.validators[0].compiledCode,
-    version: "V2",
-  };
 
   return (
     <div className="container">
@@ -51,7 +60,7 @@ export default function Home() {
           <a href="https://meshjs.dev/">Mesh</a> Aiken Hello World
         </h1>
 
-        <div className="demo">
+        <div className="demo flex flex-col">
           {!connected && <CardanoWallet />}
 
           {connected &&
@@ -99,7 +108,7 @@ export default function Home() {
           </a>
 
           <a
-            href="https://aiken-lang.org/getting-started/hello-world"
+            href="https://aiken-lang.org/example--hello-world"
             className="card"
           >
             <h2>Aiken Hello World</h2>
@@ -123,18 +132,13 @@ function Lock({ script, setState }) {
 
   async function lockAiken() {
     setState(States.locking);
-    const scriptAddress = resolvePlutusScriptAddress(script, 0);
-
-    const hash = resolvePaymentKeyHash((await wallet.getUsedAddresses())[0]);
 
     const tx = new Transaction({ initiator: wallet }).sendLovelace(
       {
         address: scriptAddress,
-        datum: {
-          value: hash,
-        },
+        datum: { value: datum, inline: true },
       },
-      "20000000"
+      lovelaceAmount
     );
 
     const unsignedTx = await tx.build();
@@ -142,11 +146,14 @@ function Lock({ script, setState }) {
     const txHash = await wallet.submitTx(signedTx);
     console.log("txHash", txHash);
     if (txHash) {
-      const koios = new KoiosProvider("preprod");
       setState(States.lockingConfirming);
-      koios.onTxConfirmed(txHash, () => {
-        setState(States.locked);
-      });
+      koios.onTxConfirmed(
+        txHash,
+        () => {
+          setState(States.locked);
+        },
+        100
+      );
     }
   }
 
@@ -161,9 +168,8 @@ function Unlock({ script, setState }) {
   const { wallet } = useWallet();
 
   async function _getAssetUtxo({ scriptAddress, asset, datum }) {
-    const koios = new KoiosProvider("preprod");
-
     const utxos = await koios.fetchAddressUTxOs(scriptAddress, asset);
+    console.log(1, 'utxos', utxos);
 
     const dataHash = resolveDataHash(datum);
 
@@ -177,12 +183,11 @@ function Unlock({ script, setState }) {
   async function unlockAiken() {
     setState(States.unlocking);
     const scriptAddress = resolvePlutusScriptAddress(script, 0);
-    const hash = resolvePaymentKeyHash((await wallet.getUsedAddresses())[0]);
 
     const assetUtxo = await _getAssetUtxo({
       scriptAddress: scriptAddress,
       asset: "lovelace",
-      datum: hash,
+      datum: datum,
     });
 
     const address = await wallet.getChangeAddress();
@@ -192,7 +197,7 @@ function Unlock({ script, setState }) {
       .redeemValue({
         value: assetUtxo,
         script: script,
-        datum: hash,
+        datum: datum,
       })
       .sendValue(address, assetUtxo)
       .setRequiredSigners([address]);
@@ -203,7 +208,6 @@ function Unlock({ script, setState }) {
     console.log("txHash", txHash);
 
     if (txHash) {
-      const koios = new KoiosProvider("preprod");
       setState(States.unlockingConfirming);
       koios.onTxConfirmed(txHash, () => {
         setState(States.unlocked);
