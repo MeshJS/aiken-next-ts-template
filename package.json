@@ -9,8 +9,8 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@meshsdk/core": "^1.5.6",
-    "@meshsdk/react": "^1.1.7",
+    "@meshsdk/core": "1.5.6",
+    "@meshsdk/react": "1.1.7",
     "@next/font": "13.1.6",
     "@types/node": "18.11.18",
     "@types/react": "18.0.27",
@@ -22,5 +22,9 @@
     "react": "18.2.0",
     "react-dom": "18.2.0",
     "typescript": "4.9.5"
+  },
+  "resolutions": {
+    "@types/react": "17.0.2",
+    "@types/react-dom": "17.0.2"
   }
 }

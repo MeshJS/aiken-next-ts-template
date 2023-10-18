@@ -10,7 +10,7 @@ import {
 import type { PlutusScript, Data } from "@meshsdk/core";
 import { CardanoWallet, MeshBadge, useWallet } from "@meshsdk/react";
 
-import plutusScript from "@data/plutus.json";
+import plutusScript from "../data/plutus.json";
 import { useState } from "react";
 import cbor from "cbor";
 
