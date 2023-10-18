@@ -5,12 +5,14 @@ import {
   Transaction,
   KoiosProvider,
   resolveDataHash,
+  resolvePaymentKeyHash,
 } from "@meshsdk/core";
 import type { PlutusScript, Data } from "@meshsdk/core";
 import { CardanoWallet, MeshBadge, useWallet } from "@meshsdk/react";
 
 import plutusScript from "@data/plutus.json";
 import { useState } from "react";
+import cbor from "cbor";
 
 enum States {
   init,
@@ -23,17 +25,14 @@ enum States {
 }
 
 const script: PlutusScript = {
-  code: plutusScript.validators[0].compiledCode,
+  code: cbor
+    .encode(Buffer.from(plutusScript.validators[0].compiledCode, "hex"))
+    .toString("hex"),
   version: "V2",
 };
 const scriptAddress = resolvePlutusScriptAddress(script, 0);
 const redeemerData = "Hello, World!";
-const lovelaceAmount = "5000000";
-
-const datum: Data = {
-  alternative: 0,
-  fields: [redeemerData],
-};
+const lovelaceAmount = "3000000";
 
 const koios = new KoiosProvider("preprod");
 
@@ -60,7 +59,7 @@ export default function Home() {
           <a href="https://meshjs.dev/">Mesh</a> Aiken Hello World
         </h1>
 
-        <div className="demo flex flex-col">
+        <div className="demo">
           {!connected && <CardanoWallet />}
 
           {connected &&
@@ -68,24 +67,24 @@ export default function Home() {
             state != States.unlocking && (
               <>
                 {(state == States.init || state != States.locked) && (
-                  <Lock script={script} setState={setState} />
+                  <Lock setState={setState} />
                 )}
-                <Unlock script={script} setState={setState} />
+                <Unlock setState={setState} />
               </>
             )}
-
-          {connected && (
-            <>
-              {(state == States.locking || state == States.unlocking) && (
-                <>Creating transaction...</>
-              )}
-              {(state == States.lockingConfirming ||
-                state == States.unlockingConfirming) && (
-                <>Awaiting transaction confirm...</>
-              )}
-            </>
-          )}
         </div>
+
+        {connected && (
+          <div className="demo">
+            {(state == States.locking || state == States.unlocking) && (
+              <>Creating transaction...</>
+            )}
+            {(state == States.lockingConfirming ||
+              state == States.unlockingConfirming) && (
+              <>Awaiting transaction confirm...</>
+            )}
+          </div>
+        )}
 
         <div className="grid">
           <a href="https://meshjs.dev/apis" className="card">
@@ -97,7 +96,7 @@ export default function Home() {
           </a>
 
           <a
-            href="https://meshjs.dev/guides/prove-wallet-ownership"
+            href="https://meshjs.dev/guides/smart-contract-transactions"
             className="card"
           >
             <h2>Smart Contracts</h2>
@@ -127,16 +126,22 @@ export default function Home() {
   );
 }
 
-function Lock({ script, setState }) {
+function Lock({ setState }) {
   const { wallet } = useWallet();
 
   async function lockAiken() {
     setState(States.locking);
 
+    const hash = resolvePaymentKeyHash((await wallet.getUsedAddresses())[0]);
+    const datum: Data = {
+      alternative: 0,
+      fields: [hash],
+    };
+
     const tx = new Transaction({ initiator: wallet }).sendLovelace(
       {
         address: scriptAddress,
-        datum: { value: datum, inline: true },
+        datum: { value: datum },
       },
       lovelaceAmount
     );
@@ -164,12 +169,11 @@ function Lock({ script, setState }) {
   );
 }
 
-function Unlock({ script, setState }) {
+function Unlock({ setState }) {
   const { wallet } = useWallet();
 
   async function _getAssetUtxo({ scriptAddress, asset, datum }) {
     const utxos = await koios.fetchAddressUTxOs(scriptAddress, asset);
-    console.log(1, 'utxos', utxos);
 
     const dataHash = resolveDataHash(datum);
 
@@ -184,13 +188,21 @@ function Unlock({ script, setState }) {
     setState(States.unlocking);
     const scriptAddress = resolvePlutusScriptAddress(script, 0);
 
+    const address = (await wallet.getUsedAddresses())[0];
+    const hash = resolvePaymentKeyHash(address);
+    const datum: Data = {
+      alternative: 0,
+      fields: [hash],
+    };
+
     const assetUtxo = await _getAssetUtxo({
       scriptAddress: scriptAddress,
       asset: "lovelace",
       datum: datum,
     });
+    console.log("assetUtxo", assetUtxo);
 
-    const address = await wallet.getChangeAddress();
+    const redeemer = { data: { alternative: 0, fields: [redeemerData] } };
 
     // create the unlock asset transaction
     const tx = new Transaction({ initiator: wallet })
@@ -198,6 +210,7 @@ function Unlock({ script, setState }) {
         value: assetUtxo,
         script: script,
         datum: datum,
+        redeemer: redeemer,
       })
       .sendValue(address, assetUtxo)
       .setRequiredSigners([address]);
