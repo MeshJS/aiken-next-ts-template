@@ -226,8 +226,6 @@ function Unlock({ setState }) {
         setState(States.unlocked);
       });
     }
-
-    if (txHash) setState(States.unlocked);
   }
 
   return (
