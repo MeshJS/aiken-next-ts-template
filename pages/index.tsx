@@ -96,12 +96,12 @@ export default function Home() {
           </a>
 
           <a
-            href="https://meshjs.dev/guides/smart-contract-transactions"
+            href="https://meshjs.dev/guides/aiken"
             className="card"
           >
-            <h2>Smart Contracts</h2>
+            <h2>Aiken Hello World</h2>
             <p>
-              A step-by-step guide to integrate your Cardano Smart Contract to a
+              A step-by-step guide to integrate your Aiken smart contract to a
               web application.
             </p>
           </a>
@@ -110,7 +110,7 @@ export default function Home() {
             href="https://aiken-lang.org/example--hello-world"
             className="card"
           >
-            <h2>Aiken Hello World</h2>
+            <h2>Aiken Docs</h2>
             <p>
               Write smart contracts on Cardano with Aiken. The supporting
               tutorial for this start kit is available on the Aiken website.
