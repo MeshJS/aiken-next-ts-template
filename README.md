@@ -24,39 +24,61 @@ You can also try the [live demo](https://aiken-template.meshjs.dev) and here are
 
 ## System setup
 
-This section will guide you through the process of setting up your system compile Aiken smart contracts. You can skip this section if you have already set up your system or do not wish to compile the contract.
+This section will guide you through the process of setting up your
+system compile Aiken smart contracts. You can skip this section if
+you have already set up your system or do not wish to compile the
+contract.
 
-### Install Rust and Cargo
+You can also check the installation instructions on the [Aiken website](https://aiken-lang.org/installation-instructions) for more information.
 
-Aiken is written in Rust, so you will need to install Rust and Cargo to compile the smart contract. You can install Rust and Cargo by following the instructions on the [Rust website](https://www.rust-lang.org/).
+### Using aikup (on Linux & MacOS only)
 
-Next, you will need Cargo, the Rust package manager. You can install Cargo by following the instructions on the [Cargo website](https://doc.rust-lang.org/stable/book/ch01-01-installation.html).
+If you are using Linux or MacOS, you can use the utility tool to
+download and manage Aiken's pre-compiled executables.
 
-You will know you have successfully installed Rust and Cargo when you can run the following commands in your terminal:
-
-```bash
-$ rustc --version
-$ cargo --version
-```
-
-### Install the Aiken CLI
-
-The Aiken CLI is a command-line tool that allows you to compile Aiken smart contracts. 
-
-You can install the Aiken CLI by running the following command in your terminal:
+You can install the Aiken CLI by running the following command in
+your terminal:
 
 ```bash
 $ curl -sSfL https://install.aiken-lang.org | bash
 $ aikup
 ```
 
-Check Aiken installation instructions on the [Aiken website](https://aiken-lang.org/installation-instructions) for more information.
+### From sources (all platforms)
 
-You will know you have successfully installed the Aiken CLI when you can run the following command in your terminal:
+Aiken is written in Rust, so you will need to install Rust and Cargo
+to compile the smart contract. You can install Rust by
+following the instructions on the [Rust website](https://www.rust-lang.org/).
+
+Next, you will need Cargo, the Rust package manager. You can install
+Cargo by following the instructions on the [Cargo website](https://doc.rust-lang.org/stable/book/ch01-01-installation.html).
+
+You will know you have successfully installed Rust and Cargo when
+you can run the following commands in your terminal:
+
+```bash
+$ rustc --version
+$ cargo --version
+```
+
+Next, you will need to install the Aiken CLI. You can install the
+Aiken CLI by running the following command in your terminal:
+
+```bash
+$ cargo install aiken
+```
+
+### Check your installation
+
+You will know you have successfully installed the Aiken CLI when you
+can run the following command in your terminal:
 
 ```bash
 $ aiken -V
 ```
+
+If you face any issues, please check the installation instructions
+on the [Aiken website](https://aiken-lang.org/installation-instructions) for more information.
 
 ## Writing a smart contract with Aiken
 
@@ -87,23 +109,23 @@ use aiken/hash.{Blake2b_224, Hash}
 use aiken/list
 use aiken/transaction.{ScriptContext}
 use aiken/transaction/credential.{VerificationKey}
- 
+
 type Datum {
   owner: Hash<Blake2b_224, VerificationKey>,
 }
- 
+
 type Redeemer {
   msg: ByteArray,
 }
- 
+
 validator {
   fn hello_world(datum: Datum, redeemer: Redeemer, context: ScriptContext) -> Bool {
     let must_say_hello =
       redeemer.msg == "Hello, World!"
- 
+
     let must_be_signed =
       list.has(context.transaction.extra_signatories, datum.owner)
- 
+
     must_say_hello && must_be_signed
   }
 }
@@ -235,7 +257,7 @@ const assetUtxo = await _getAssetUtxo({
 });
 console.log("assetUtxo", assetUtxo);
 
-const redeemer = { data: { alternative: 0, fields: ['Hello, World!'] } };
+const redeemer = { data: { alternative: 0, fields: ["Hello, World!"] } };
 
 // create the unlock asset transaction
 const tx = new Transaction({ initiator: wallet })
